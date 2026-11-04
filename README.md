@@ -13,3 +13,7 @@ Open `index.html` in a browser. No build tools or dependencies are required.
 - `app.js` — mobile navigation and meal carousel interactions
 
 The meal images are loaded from Unsplash and the headings use Google Fonts, so those assets need an internet connection.
+
+## Publish with GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` deploys the static site whenever changes are pushed to `main`. In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions** if it is not already selected. After the first successful run, the site will be available at `https://jabalurg.github.io/Ai-meel-planner/`.
