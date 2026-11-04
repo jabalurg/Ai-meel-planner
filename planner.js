@@ -84,6 +84,10 @@ form.addEventListener('submit', async (event) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...data, calories }),
     });
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Сервер меню не найден: открыта статическая страница или запущена старая версия. Откройте сайт по ссылке вашего туннеля и запустите start-with-ai.ps1.');
+    }
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Не удалось составить меню.');
     planContent.textContent = result.plan;
