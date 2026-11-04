@@ -46,23 +46,50 @@ const authForm = document.querySelector('#register-form');
 const authTitle = document.querySelector('#auth-title');
 const authMessage = document.querySelector('#auth-message');
 const passwordInput = authForm?.elements.password;
-const nameInput = authForm?.elements.name;
-const authConfig = window.MEALMATE_AUTH || {};
-let authClient = null;
-let authConfigError = '';
-if (window.supabase && authConfig.supabaseUrl && authConfig.publishableKey) {
-  try {
-    authClient = window.supabase.createClient(authConfig.supabaseUrl, authConfig.publishableKey);
-  } catch {
-    authConfigError = 'The Supabase settings in auth-config.js are invalid. Check the Project URL and Publishable key.';
-  }
-} else if (!window.supabase) {
-  authConfigError = 'The Supabase client did not load. Check your internet connection and reload the page.';
-}
-const authNavLogin = document.querySelector('#auth-nav-login');
-const authNavRegister = document.querySelector('#auth-nav-register');
-let authSession = null;
+const accountIdInput = authForm?.elements.accountId;
+const ACCOUNTS_KEY = 'mealmate.localAccounts.v1';
+const SESSION_KEY = 'mealmate.localSession.v1';
+const HASH_ITERATIONS = 600000;
+const HASH_LENGTH = 256;
 let lastAuthTrigger = null;
+
+function readAccounts() {
+  try {
+    const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
+    return Array.isArray(accounts) ? accounts : [];
+  } catch {
+    return [];
+  }
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+}
+
+async function derivePasswordHash(password, salt, iterations = HASH_ITERATIONS) {
+  const passwordKey = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits'],
+  );
+  const hash = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+    passwordKey,
+    HASH_LENGTH,
+  );
+  return new Uint8Array(hash);
+}
+
+function hashesMatch(first, second) {
+  if (first.length !== second.length) return false;
+  let difference = 0;
+  for (let index = 0; index < first.length; index += 1) difference |= first[index] ^ second[index];
+  return difference === 0;
+}
 
 function setAuthNotice(message, type = 'info') {
   authMessage.textContent = message;
@@ -70,20 +97,17 @@ function setAuthNotice(message, type = 'info') {
   authMessage.classList.toggle('is-success', type === 'success');
 }
 
-function updateAuthNavigation(session) {
-  authSession = session;
-  const signedIn = Boolean(session?.user);
-  authNavLogin.textContent = signedIn ? 'Log out' : 'Log in';
-  authNavLogin.dataset.authMode = signedIn ? 'logout' : 'login';
-  authNavRegister.hidden = signedIn;
+function updateAuthNavigation(accountId) {
+  const loginButton = document.querySelector('.nav-actions [data-auth-mode="login"], .nav-actions [data-auth-mode="logout"]');
+  const registerButton = document.querySelector('.nav-actions [data-auth-mode="register"]');
+  if (!loginButton || !registerButton) return;
+  loginButton.textContent = accountId ? 'Log out' : 'Log in';
+  loginButton.dataset.authMode = accountId ? 'logout' : 'login';
+  registerButton.hidden = Boolean(accountId);
 }
 
-function getAuthErrorMessage(error) {
-  const message = error?.message || 'Something went wrong. Please try again.';
-  if (/user already registered/i.test(message)) return 'An account with this email already exists. Try logging in.';
-  if (/invalid login credentials/i.test(message)) return 'Email or password is incorrect.';
-  if (/email not confirmed/i.test(message)) return 'Email confirmation is still enabled in Supabase. Turn it off to allow password-only registration.';
-  return message;
+function normalizeAccountId(value) {
+  return value.trim().toLowerCase();
 }
 
 function setAuthMode(mode) {
@@ -91,22 +115,20 @@ function setAuthMode(mode) {
   authPanel?.classList.toggle('login-mode', isLogin);
   authTitle.innerHTML = isLogin ? 'Welcome<br><span>back.</span>' : 'Create your<br><span>good food era.</span>';
   document.querySelector('.auth-intro').textContent = isLogin
-    ? 'Your meal plan is waiting for you.'
-    : 'Your personal meal plan starts with a few details.';
+    ? 'Enter your account ID and password.'
+    : 'Choose an account ID and password to get started.';
   document.querySelector('.submit-label').textContent = isLogin ? 'Log in' : 'Create my account';
   document.querySelector('.auth-tabs [data-auth-tab="register"]').classList.toggle('is-active', !isLogin);
   document.querySelector('.auth-tabs [data-auth-tab="login"]').classList.toggle('is-active', isLogin);
   document.querySelector('.auth-tabs [data-auth-tab="register"]').setAttribute('aria-selected', String(!isLogin));
   document.querySelector('.auth-tabs [data-auth-tab="login"]').setAttribute('aria-selected', String(isLogin));
-  nameInput.required = !isLogin;
-  nameInput.disabled = isLogin;
+  accountIdInput.placeholder = isLogin ? 'Your account ID' : 'Choose an ID';
   passwordInput.minLength = isLogin ? 1 : 8;
   passwordInput.autocomplete = isLogin ? 'current-password' : 'new-password';
   passwordInput.placeholder = isLogin ? 'Your password' : 'Create a password';
+  document.querySelector('.field-hint').hidden = isLogin;
   authMessage.classList.remove('is-error', 'is-success');
-  setAuthNotice(authClient
-    ? (isLogin ? 'Log in with the email and password you registered with.' : 'Register with email and password. No email code is required when Confirm Email is disabled in Supabase.')
-    : authConfigError || 'Add your Supabase Project URL and Publishable key to auth-config.js to enable accounts.');
+  setAuthNotice('Accounts are stored only in this browser. No email code is used.');
 }
 
 function openAuth(mode, trigger) {
@@ -115,7 +137,7 @@ function openAuth(mode, trigger) {
   authModal.hidden = false;
   document.body.classList.add('auth-opened');
   setAuthMode(mode);
-  authForm.elements[mode === 'login' ? 'email' : 'name'].focus();
+  accountIdInput.focus();
 }
 
 function closeAuth() {
@@ -128,15 +150,10 @@ function closeAuth() {
 }
 
 document.querySelectorAll('.auth-open, [data-auth-mode]').forEach((button) => {
-  button.addEventListener('click', async () => {
-    if (button.dataset.authMode === 'logout' && authClient) {
-      try {
-        const { error } = await authClient.auth.signOut();
-        if (error) setAuthNotice(getAuthErrorMessage(error), 'error');
-        else updateAuthNavigation(null);
-      } catch (error) {
-        setAuthNotice(getAuthErrorMessage(error), 'error');
-      }
+  button.addEventListener('click', () => {
+    if (button.dataset.authMode === 'logout') {
+      localStorage.removeItem(SESSION_KEY);
+      updateAuthNavigation(null);
       return;
     }
     openAuth(button.dataset.authMode || 'register', button);
@@ -162,43 +179,56 @@ document.querySelector('.password-toggle')?.addEventListener('click', (event) =>
 authForm?.addEventListener('submit', (event) => {
   event.preventDefault();
   if (!authForm.reportValidity()) return;
-  if (!authClient) {
-    setAuthNotice('Account service is not configured yet. Add the Supabase Project URL and Publishable key first.', 'error');
+  if (!window.crypto?.subtle || !window.crypto?.getRandomValues) {
+    setAuthNotice('Password security is unavailable here. Open the page through HTTPS or localhost and try again.', 'error');
     return;
   }
 
   const submitButton = authForm.querySelector('.auth-submit');
   const submitLabel = authForm.querySelector('.submit-label');
   const previousLabel = submitLabel.textContent;
+  const isLogin = authPanel.classList.contains('login-mode');
   submitButton.disabled = true;
-  submitLabel.textContent = authPanel.classList.contains('login-mode') ? 'Logging in…' : 'Creating account…';
+  submitLabel.textContent = isLogin ? 'Logging in…' : 'Creating account…';
 
   (async () => {
     try {
-      const email = authForm.elements.email.value.trim();
+      const accountId = normalizeAccountId(accountIdInput.value);
       const password = passwordInput.value;
-      const isLogin = authPanel.classList.contains('login-mode');
-      const response = isLogin
-        ? await authClient.auth.signInWithPassword({ email, password })
-        : await authClient.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: nameInput.value.trim() } },
-        });
+      const accounts = readAccounts();
 
-      if (response.error) throw response.error;
-      if (!response.data.session) {
-        throw new Error('Supabase still requires email confirmation. In Authentication settings, turn off Confirm Email to enable password-only registration.');
+      if (isLogin) {
+        const account = accounts.find((entry) => entry.id === accountId);
+        if (!account) throw new Error('Account ID or password is incorrect.');
+        const passwordHash = await derivePasswordHash(password, base64ToBytes(account.salt), account.iterations);
+        if (!hashesMatch(passwordHash, base64ToBytes(account.hash))) {
+          throw new Error('Account ID or password is incorrect.');
+        }
+        localStorage.setItem(SESSION_KEY, account.id);
+        updateAuthNavigation(account.id);
+        passwordInput.value = '';
+        setAuthNotice(`You're logged in as ${account.id}.`, 'success');
+        return;
       }
 
-      updateAuthNavigation(response.data.session);
-      passwordInput.value = '';
-      if (!isLogin) nameInput.value = '';
-      setAuthNotice(isLogin
-        ? `You're logged in as ${response.data.user.email}.`
-        : `Account created. You're logged in as ${response.data.user.email}.`, 'success');
+      if (accounts.some((entry) => entry.id === accountId)) {
+        throw new Error('That account ID is already in use. Try logging in instead.');
+      }
+      const salt = window.crypto.getRandomValues(new Uint8Array(16));
+      const passwordHash = await derivePasswordHash(password, salt);
+      const account = {
+        id: accountId,
+        salt: bytesToBase64(salt),
+        hash: bytesToBase64(passwordHash),
+        iterations: HASH_ITERATIONS,
+      };
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, account]));
+      localStorage.setItem(SESSION_KEY, accountId);
+      updateAuthNavigation(accountId);
+      authForm.reset();
+      setAuthNotice(`Account created. You're logged in as ${accountId}.`, 'success');
     } catch (error) {
-      setAuthNotice(getAuthErrorMessage(error), 'error');
+      setAuthNotice(error.message || 'Could not access browser storage. Check your browser settings and try again.', 'error');
     } finally {
       submitButton.disabled = false;
       submitLabel.textContent = previousLabel;
@@ -206,9 +236,13 @@ authForm?.addEventListener('submit', (event) => {
   })();
 });
 
-if (authClient) {
-  authClient.auth.getSession().then(({ data, error }) => {
-    if (!error) updateAuthNavigation(data.session);
-  });
-  authClient.auth.onAuthStateChange((_event, session) => updateAuthNavigation(session));
+try {
+  const savedAccountId = localStorage.getItem(SESSION_KEY);
+  if (savedAccountId && readAccounts().some((account) => account.id === savedAccountId)) {
+    updateAuthNavigation(savedAccountId);
+  } else {
+    localStorage.removeItem(SESSION_KEY);
+  }
+} catch {
+  // If browser storage is blocked, the form will report the issue on submit.
 }

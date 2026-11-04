@@ -10,8 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="./auth-config.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -19,7 +17,7 @@
     <header class="topbar">
       <a class="brand" href="#top" aria-label="MealMate home"><span class="brand-mark">m</span><span>mealmate<span class="brand-dot">.</span></span></a>
       <nav class="desktop-nav" aria-label="Main navigation"><a href="#how-it-works">How it works</a><a href="#menu">Your menu</a><a href="#stories">Stories</a></nav>
-      <div class="nav-actions"><button class="login-link auth-open" id="auth-nav-login" type="button" data-auth-mode="login">Log in</button><button class="button button-small auth-open" id="auth-nav-register" type="button" data-auth-mode="register">Get started <span>↗</span></button><button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div>
+      <div class="nav-actions"><button class="login-link auth-open" type="button" data-auth-mode="login">Log in</button><button class="button button-small auth-open" type="button" data-auth-mode="register">Get started <span>↗</span></button><button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div>
     </header>
 
     <main id="top">
@@ -69,10 +67,9 @@
       <p class="auth-intro">Your personal meal plan starts with a few details.</p>
       <div class="auth-tabs" role="tablist" aria-label="Account access"><button class="auth-tab is-active" type="button" role="tab" aria-selected="true" data-auth-tab="register">Create account</button><button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="login">Log in</button></div>
       <form class="auth-form" id="register-form" novalidate>
-        <label class="auth-field name-field">Your name<input name="name" autocomplete="name" placeholder="Alex Morgan" required minlength="2"></label>
-        <label class="auth-field">Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+        <label class="auth-field">Account ID or email<input name="accountId" type="text" autocomplete="username" placeholder="Choose an ID" required minlength="3" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._@+-]{2,63}" title="Use 3–64 letters, numbers, dots, underscores, plus signs, or hyphens."></label>
         <label class="auth-field password-field">Password <span class="field-hint">8+ characters</span><span class="password-wrap"><input name="password" type="password" autocomplete="new-password" placeholder="Create a password" required minlength="8"><button class="password-toggle" type="button" aria-label="Show password">Show</button></span></label>
-        <p class="auth-message" id="auth-message" aria-live="polite">This is a form preview. No account will be created or password saved.</p>
+        <p class="auth-message" id="auth-message" aria-live="polite">Accounts are stored only in this browser. No email code is used.</p>
         <button class="button auth-submit" type="submit"><span class="submit-label">Create my account</span><span>↗</span></button>
       </form>
       <p class="auth-footnote">Already have an account? <button type="button" data-auth-mode="login">Log in</button></p>

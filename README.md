@@ -4,7 +4,7 @@ An energetic landing page concept for an AI-powered personalized meal planning s
 
 ## Run locally
 
-Open `index.html` in a browser. No build tools or dependencies are required.
+Open `index.html` in a browser. No build tools or dependencies are required. If your browser blocks the Web Crypto API on a `file://` page, open it through localhost or the HTTPS GitHub Pages site instead.
 
 ## Files
 
@@ -14,16 +14,9 @@ Open `index.html` in a browser. No build tools or dependencies are required.
 
 The meal images are loaded from Unsplash and the headings use Google Fonts, so those assets need an internet connection.
 
-## Email and password accounts
+## Local account prototype
 
-The sign-up and login forms use Supabase Auth. To connect a Supabase project:
-
-1. In Supabase, open **Project Settings → API Keys** and copy the **Project URL** and **Publishable key**.
-2. Put those values in `auth-config.js`. This file is public, so use only the publishable key; never use a `service_role` key here.
-3. In Supabase **Authentication → Sign In / Providers → Email**, turn off **Confirm Email** to allow users to register and sign in without an email code.
-4. Set the site's URL in Supabase Auth URL configuration to `https://jabalurg.github.io/Ai-meel-planner/`.
-
-Supabase stores and refreshes the signed-in session. The form does not save users' passwords in the site. Turning off email confirmation means Supabase accepts an email address without verifying that the user owns it.
+Sign-up and login use an account ID (or email) and password, stored only in this browser. Passwords are hashed with a unique salt using PBKDF2 via the Web Crypto API; plain-text passwords are not stored. There is no email verification or remote account service. Accounts do not sync to another browser or device and can be removed by clearing this site's browser storage. This is a local prototype, not production account security.
 
 ## Publish with GitHub Pages
 
