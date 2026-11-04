@@ -1,10 +1,14 @@
 $ErrorActionPreference = 'Stop'
 
-Write-Host 'Enter your OpenAI API key. It is used only by this process and is not saved in the project.' -ForegroundColor Green
+Write-Host 'Enter your OpenAI API key for AI menus, or press Enter to use the free local planner.' -ForegroundColor Green
 $secureKey = Read-Host 'OpenAI API key' -AsSecureString
 $apiKey = [System.Net.NetworkCredential]::new('', $secureKey).Password
-if ([string]::IsNullOrWhiteSpace($apiKey)) { throw 'No API key was entered.' }
-$env:OPENAI_API_KEY = $apiKey
+if ([string]::IsNullOrWhiteSpace($apiKey)) {
+  Remove-Item Env:OPENAI_API_KEY -ErrorAction SilentlyContinue
+  Write-Host 'Starting without an API key. Meal plans will use local recipes.' -ForegroundColor Yellow
+} else {
+  $env:OPENAI_API_KEY = $apiKey
+}
 $apiKey = $null
 $secureKey = $null
 

@@ -75,8 +75,8 @@ form.addEventListener('submit', async (event) => {
   const data = Object.fromEntries(new FormData(form).entries());
   saveProfile();
   submitButton.disabled = true;
-  document.querySelector('#generate-label').textContent = 'Готовим меню…';
-  message.textContent = 'Отправляем параметры в OpenAI и составляем меню. Обычно это занимает несколько секунд.';
+  document.querySelector('#generate-label').textContent = 'Собираем меню…';
+  message.textContent = 'Подбираем блюда по вашим параметрам…';
   message.classList.remove('is-error');
   try {
     const response = await fetch('/api/meal-plan', {
@@ -91,15 +91,17 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Не удалось составить меню.');
     planContent.textContent = result.plan;
+    document.querySelector('#plan-result .eyebrow').textContent = result.mode === 'local' ? 'ЛОКАЛЬНОЕ МЕНЮ · БЕЗ ИИ' : 'МЕНЮ СОСТАВЛЕНО С ИИ';
     planResult.hidden = false;
     document.querySelector('.planner-steps span:nth-of-type(2)').classList.add('step-active');
     planResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    message.textContent = '';
+    message.textContent = result.notice || '';
+    message.classList.toggle('is-error', false);
   } catch (error) {
     message.textContent = error.message || 'Не удалось связаться с сервером.';
     message.classList.add('is-error');
   } finally {
     submitButton.disabled = false;
-    document.querySelector('#generate-label').textContent = 'Составить меню с ИИ';
+    document.querySelector('#generate-label').textContent = 'Составить меню';
   }
 });
