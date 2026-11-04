@@ -97,7 +97,17 @@ function generateMealPlan(request, response) {
         signal: AbortSignal.timeout(60000),
       });
       const payload = await result.json();
-      if (!result.ok) return json(response, 502, { error: 'OpenAI не смог создать меню. Проверьте API-ключ и баланс API.' });
+      if (!result.ok) {
+        const code = payload?.error?.code || payload?.error?.type || '';
+        let errorMessage = 'OpenAI отклонил запрос. Проверьте настройки API и попробуйте ещё раз.';
+        if (result.status === 401) errorMessage = 'OpenAI не принял API-ключ. Создайте новый ключ и запустите сервер с ним.';
+        else if (result.status === 429 && /quota|billing|credit_balance|hard_limit/i.test(code)) errorMessage = 'На API-аккаунте нет доступных кредитов или достигнут лимит расходов. Проверьте оплату и лимиты OpenAI API.';
+        else if (result.status === 429) errorMessage = 'Превышен лимит запросов OpenAI. Подождите немного и попробуйте снова.';
+        else if (result.status === 403) errorMessage = 'У API-ключа нет доступа к выбранной модели или проекту. Проверьте настройки проекта OpenAI.';
+        else if (result.status === 404) errorMessage = 'Выбранная модель недоступна для этого API-проекта. Проверьте доступ к моделям OpenAI.';
+        else if (result.status >= 500) errorMessage = 'Сервис OpenAI временно недоступен. Попробуйте позже.';
+        return json(response, 502, { error: errorMessage });
+      }
       const text = (payload.output || []).flatMap((item) => item.content || []).filter((part) => part.type === 'output_text').map((part) => part.text).join('\n').trim();
       if (!text) return json(response, 502, { error: 'Не удалось прочитать ответ OpenAI. Попробуйте ещё раз.' });
       return json(response, 200, { plan: text });
