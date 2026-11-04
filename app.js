@@ -153,7 +153,7 @@ document.querySelectorAll('.auth-open, [data-auth-mode]').forEach((button) => {
   button.addEventListener('click', () => {
     if (button.dataset.authMode === 'logout') {
       localStorage.removeItem(SESSION_KEY);
-      updateAuthNavigation(null);
+      window.location.href = 'index.html';
       return;
     }
     openAuth(button.dataset.authMode || 'register', button);
@@ -207,7 +207,7 @@ authForm?.addEventListener('submit', (event) => {
         localStorage.setItem(SESSION_KEY, account.id);
         updateAuthNavigation(account.id);
         passwordInput.value = '';
-        setAuthNotice(`You're logged in as ${account.id}.`, 'success');
+        window.location.href = 'planner.html';
         return;
       }
 
@@ -226,7 +226,7 @@ authForm?.addEventListener('submit', (event) => {
       localStorage.setItem(SESSION_KEY, accountId);
       updateAuthNavigation(accountId);
       authForm.reset();
-      setAuthNotice(`Account created. You're logged in as ${accountId}.`, 'success');
+      window.location.href = 'planner.html';
     } catch (error) {
       setAuthNotice(error.message || 'Could not access browser storage. Check your browser settings and try again.', 'error');
     } finally {
@@ -246,3 +246,4 @@ try {
 } catch {
   // If browser storage is blocked, the form will report the issue on submit.
 }
+
