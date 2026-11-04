@@ -17,7 +17,7 @@
     <header class="topbar">
       <a class="brand" href="#top" aria-label="MealMate home"><span class="brand-mark">m</span><span>mealmate<span class="brand-dot">.</span></span></a>
       <nav class="desktop-nav" aria-label="Main navigation"><a href="#how-it-works">How it works</a><a href="#menu">Your menu</a><a href="#stories">Stories</a></nav>
-      <div class="nav-actions"><a class="login-link" href="#start">Log in</a><a class="button button-small" href="#start">Get started <span>↗</span></a><button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div>
+      <div class="nav-actions"><button class="login-link auth-open" type="button" data-auth-mode="login">Log in</button><button class="button button-small auth-open" type="button" data-auth-mode="register">Get started <span>↗</span></button><button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button></div>
     </header>
 
     <main id="top">
@@ -26,7 +26,7 @@
           <div class="eyebrow"><span class="pulse"></span> YOUR PERSONAL AI NUTRITIONIST</div>
           <h1>Eat well.<br><span>Feel unstoppable.</span></h1>
           <p class="hero-text">Personalized meal plans that make reaching your goals feel less like a plan and more like your new normal.</p>
-          <div class="hero-cta"><a class="button" href="#start">Build my meal plan <span>↗</span></a><div class="social-proof"><div class="avatar-stack"><span>J</span><span>M</span><span>A</span><span>+</span></div><div><strong>12k+</strong><small>people eating better</small></div></div></div>
+          <div class="hero-cta"><button class="button auth-open" type="button" data-auth-mode="register">Build my meal plan <span>↗</span></button><div class="social-proof"><div class="avatar-stack"><span>J</span><span>M</span><span>A</span><span>+</span></div><div><strong>12k+</strong><small>people eating better</small></div></div></div>
           <div class="hero-note"><span class="note-icon">✳</span> Made for your goals, your taste, your life.</div>
         </div>
         <div class="hero-visual" aria-label="A colorful healthy meal bowl">
@@ -54,9 +54,28 @@
 
       <section class="quote-section section-wrap" id="stories"><div class="quote-mark">“</div><blockquote>It finally feels like eating well fits <span>my life — not the other way around.</span></blockquote><div class="quote-person"><div class="quote-avatar">S</div><div><strong>Sarah K.</strong><small>MealMate member · 8 weeks in</small></div><div class="quote-stars">★★★★★</div></div></section>
 
-      <section class="final-cta section-wrap" id="start"><div class="cta-glow"></div><div class="eyebrow"><span class="pulse"></span> YOUR NEXT CHAPTER STARTS HERE</div><h2>Feel good about<br><span>what's next.</span></h2><p>Your goals deserve a plan that works as hard as you do. Let's make it delicious.</p><a class="button" href="mailto:hello@mealmate.example?subject=Start%20my%20MealMate%20plan">Get my personal plan <span>↗</span></a><small>Free to get started · Takes about 2 minutes</small><div class="cta-spark spark-a">✳</div><div class="cta-spark spark-b">✳</div></section>
+      <section class="final-cta section-wrap" id="start"><div class="cta-glow"></div><div class="eyebrow"><span class="pulse"></span> YOUR NEXT CHAPTER STARTS HERE</div><h2>Feel good about<br><span>what's next.</span></h2><p>Your goals deserve a plan that works as hard as you do. Let's make it delicious.</p><button class="button auth-open" type="button" data-auth-mode="register">Get my personal plan <span>↗</span></button><small>Free to get started · Takes about 2 minutes</small><div class="cta-spark spark-a">✳</div><div class="cta-spark spark-b">✳</div></section>
     </main>
     <footer class="footer section-wrap"><a class="brand" href="#top"><span class="brand-mark">m</span><span>mealmate<span class="brand-dot">.</span></span></a><span>© 2026 MealMate. Eat well, live well.</span><div><a href="#how-it-works">How it works</a><a href="#menu">Your menu</a><a href="mailto:hello@mealmate.example">Say hello ↗</a></div></footer>
+  </div>
+  <div class="auth-backdrop" id="auth-modal" hidden>
+    <section class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <button class="auth-close" type="button" aria-label="Close dialog">×</button>
+      <a class="brand auth-brand" href="#top"><span class="brand-mark">m</span><span>mealmate<span class="brand-dot">.</span></span></a>
+      <div class="auth-eyebrow"><span class="pulse"></span> A FRESH START, MADE FOR YOU</div>
+      <h2 id="auth-title">Create your<br><span>good food era.</span></h2>
+      <p class="auth-intro">Your personal meal plan starts with a few details.</p>
+      <div class="auth-tabs" role="tablist" aria-label="Account access"><button class="auth-tab is-active" type="button" role="tab" aria-selected="true" data-auth-tab="register">Create account</button><button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="login">Log in</button></div>
+      <form class="auth-form" id="register-form" novalidate>
+        <label class="auth-field name-field">Your name<input name="name" autocomplete="name" placeholder="Alex Morgan" required minlength="2"></label>
+        <label class="auth-field">Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+        <label class="auth-field password-field">Password <span class="field-hint">8+ characters</span><span class="password-wrap"><input name="password" type="password" autocomplete="new-password" placeholder="Create a password" required minlength="8"><button class="password-toggle" type="button" aria-label="Show password">Show</button></span></label>
+        <label class="auth-terms"><input name="terms" type="checkbox" required><span>I agree to the <a href="#terms">Terms</a> and <a href="#privacy">Privacy Policy</a>.</span></label>
+        <p class="auth-message" id="auth-message" aria-live="polite">This is a form preview. No account will be created or password saved.</p>
+        <button class="button auth-submit" type="submit"><span class="submit-label">Create my account</span><span>↗</span></button>
+      </form>
+      <p class="auth-footnote">Already have an account? <button type="button" data-auth-mode="login">Log in</button></p>
+    </section>
   </div>
 </body>
 </html>

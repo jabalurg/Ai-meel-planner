@@ -39,3 +39,85 @@ function showMeal(index) {
 
 document.querySelector('.slide-button.prev')?.addEventListener('click', () => showMeal(mealIndex - 1));
 document.querySelector('.slide-button.next')?.addEventListener('click', () => showMeal(mealIndex + 1));
+
+const authModal = document.querySelector('#auth-modal');
+const authPanel = document.querySelector('.auth-panel');
+const authForm = document.querySelector('#register-form');
+const authTitle = document.querySelector('#auth-title');
+const authMessage = document.querySelector('#auth-message');
+const passwordInput = authForm?.elements.password;
+const nameInput = authForm?.elements.name;
+const termsInput = authForm?.elements.terms;
+let lastAuthTrigger = null;
+
+function setAuthMode(mode) {
+  const isLogin = mode === 'login';
+  authPanel?.classList.toggle('login-mode', isLogin);
+  authTitle.innerHTML = isLogin ? 'Welcome<br><span>back.</span>' : 'Create your<br><span>good food era.</span>';
+  document.querySelector('.auth-intro').textContent = isLogin
+    ? 'Your meal plan is waiting for you.'
+    : 'Your personal meal plan starts with a few details.';
+  document.querySelector('.submit-label').textContent = isLogin ? 'Log in' : 'Create my account';
+  document.querySelector('.auth-tabs [data-auth-tab="register"]').classList.toggle('is-active', !isLogin);
+  document.querySelector('.auth-tabs [data-auth-tab="login"]').classList.toggle('is-active', isLogin);
+  document.querySelector('.auth-tabs [data-auth-tab="register"]').setAttribute('aria-selected', String(!isLogin));
+  document.querySelector('.auth-tabs [data-auth-tab="login"]').setAttribute('aria-selected', String(isLogin));
+  nameInput.required = !isLogin;
+  nameInput.disabled = isLogin;
+  termsInput.required = !isLogin;
+  termsInput.disabled = isLogin;
+  passwordInput.minLength = isLogin ? 1 : 8;
+  passwordInput.autocomplete = isLogin ? 'current-password' : 'new-password';
+  passwordInput.placeholder = isLogin ? 'Your password' : 'Create a password';
+  authMessage.classList.remove('is-error');
+  authMessage.textContent = isLogin
+    ? 'Sign-in is a form preview. No account is checked or password saved.'
+    : 'This is a form preview. No account will be created or password saved.';
+}
+
+function openAuth(mode, trigger) {
+  if (!authModal) return;
+  lastAuthTrigger = trigger;
+  authModal.hidden = false;
+  document.body.classList.add('auth-opened');
+  setAuthMode(mode);
+  authForm.elements[mode === 'login' ? 'email' : 'name'].focus();
+}
+
+function closeAuth() {
+  if (!authModal) return;
+  authModal.hidden = true;
+  document.body.classList.remove('auth-opened');
+  authForm.reset();
+  setAuthMode('register');
+  lastAuthTrigger?.focus();
+}
+
+document.querySelectorAll('.auth-open, [data-auth-mode]').forEach((button) => {
+  button.addEventListener('click', () => openAuth(button.dataset.authMode || 'register', button));
+});
+document.querySelectorAll('[data-auth-tab]').forEach((button) => {
+  button.addEventListener('click', () => setAuthMode(button.dataset.authTab));
+});
+document.querySelector('.auth-close')?.addEventListener('click', closeAuth);
+authModal?.addEventListener('click', (event) => {
+  if (event.target === authModal) closeAuth();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && authModal && !authModal.hidden) closeAuth();
+});
+document.querySelector('.password-toggle')?.addEventListener('click', (event) => {
+  const button = event.currentTarget;
+  const visible = passwordInput.type === 'text';
+  passwordInput.type = visible ? 'password' : 'text';
+  button.textContent = visible ? 'Show' : 'Hide';
+  button.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+});
+authForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!authForm.reportValidity()) return;
+  authMessage.classList.remove('is-error');
+  authMessage.textContent = authPanel.classList.contains('login-mode')
+    ? 'Sign-in is not connected yet. No account was checked.'
+    : 'Registration is not connected yet. No account was created and no details were saved.';
+});
