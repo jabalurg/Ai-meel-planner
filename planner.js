@@ -91,7 +91,9 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Не удалось составить меню.');
     planContent.textContent = result.plan;
-    document.querySelector('#plan-result .eyebrow').textContent = result.mode === 'local' ? 'ЛОКАЛЬНОЕ МЕНЮ · БЕЗ ИИ' : 'МЕНЮ СОСТАВЛЕНО С ИИ';
+    document.querySelector('#plan-result .eyebrow').textContent = result.mode === 'local'
+      ? 'ЛОКАЛЬНОЕ МЕНЮ · БЕЗ ИИ'
+      : `МЕНЮ СОСТАВЛЕНО · ${(result.provider || 'AI').toUpperCase()}`;
     planResult.hidden = false;
     document.querySelector('.planner-steps span:nth-of-type(2)').classList.add('step-active');
     planResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
